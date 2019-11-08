@@ -224,6 +224,10 @@ class Example(QWidget):
         self.query_two_button.setEnabled(True)
         self.plaintextedit_queryplan1.setPlainText(str(self.session.query_one_qep_raw))
         self.plaintextedit_queryplan2.setPlainText(str(self.session.query_two_qep_raw))
+        asd = vocalizer2.parse_json(self.session.query_one_qep_raw)
+
+        asdasd  = vocalizer2.textVersion(asd)
+        print(asdasd)
 
     def click_show_query_one_tree(self):
         self.session.show_query_one_graph()

@@ -140,3 +140,182 @@ def simplify_graph(node):
         return node.children[0]
 
     return new_node
+
+
+def textVersion(node):
+    global steps, cur_step, cur_table_name, table_subquery_name_pair
+    global current_plan_tree
+    steps = ["The query is executed as follow."]
+    cur_step = 1
+    cur_table_name = 1
+    table_subquery_name_pair = {}
+
+    to_text(node)
+    if " to get intermediate table" in steps[-1]:
+        steps[-1] = steps[-1][:steps[-1].index(" to get intermediate table")] + ' to get the final result.'
+
+    return steps
+
+
+def to_text(node, skip=False):
+    print("")
+    global steps, cur_step, cur_table_name
+    increment = True
+    # skip the child if merge it with current node
+    if node.node_type in ["Unique", "Aggregate"] and len(node.children) == 1 \
+            and ("Scan" in node.children[0].node_type or node.children[0].node_type == "Sort"):
+        children_skip = True
+    elif node.node_type == "Bitmap Heap Scan" and node.children[0].node_type == "Bitmap Index Scan":
+        children_skip = True
+    else:
+        children_skip = False
+
+    # recursive
+    for child in node.children:
+        if node.node_type == "Aggregate" and len(node.children) > 1 and child.node_type == "Sort":
+            to_text(child, True)
+        else:
+            to_text(child, children_skip)
+
+    if node.node_type in ["Hash"] or skip:
+        return
+
+    step = ""
+
+    # generate natural language for various QEP operators
+    if "Join" in node.node_type:
+
+        # special preprocessing for joins
+        if node.join_type == "Semi":
+            # add the word "Semi" before "Join" into node.node_type
+            node_type_list = node.node_type.split()
+            node_type_list.insert(-1, node.join_type)
+            node.node_type = " ".join(node_type_list)
+        else:
+            pass
+
+        if "Hash" in node.node_type:
+            step += " and perform " + node.node_type.lower() + " on "
+            for i, child in enumerate(node.children):
+                if child.node_type == "Hash":
+                    child.set_output_name(child.children[0].get_output_name())
+                    hashed_table = child.get_output_name()
+                if i < len(node.children) - 1:
+                    step += ("table " + child.get_output_name())
+                else:
+                    step += (" and table " + child.get_output_name())
+            # combine hash with hash join
+            step = "hash table " + hashed_table + step + " under condition " + "parse_cond"
+
+        elif "Merge" in node.node_type:
+            step += "perform " + node.node_type.lower() + " on "
+            any_sort = False  # whether sort is performed on any table
+            for i, child in enumerate(node.children):
+                if child.node_type == "Sort":
+                    child.set_output_name(child.children[0].get_output_name())
+                    any_sort = True
+                if i < len(node.children) - 1:
+                    step += ("table " + child.get_output_name())
+                else:
+                    step += (" and table " + child.get_output_name())
+            # combine sort with merge join
+            if any_sort:
+                sort_step = "sort "
+                for child in node.children:
+                    if child.node_type == "Sort":
+                        if i < len(node.children) - 1:
+                            sort_step += ("table " + child.get_output_name())
+                        else:
+                            sort_step += (" and table " + child.get_output_name())
+                step = sort_step + " and " + step
+
+    elif node.node_type == "Bitmap Heap Scan":
+        # combine bitmap heap scan and bitmap index scan
+        if "Bitmap Index Scan" in node.children[0].node_type:
+            node.children[0].set_output_name(node.relation_name)
+            step = " with index condition " + "parse_cond"
+
+        step = "perform bitmap heap scan on table " + node.children[0].get_output_name() + step
+
+    elif "Scan" in node.node_type:
+        if node.node_type == "Seq Scan":
+            step += "perform sequential scan on table "
+        else:
+            step += "perform " + node.node_type.lower() + " on table "
+
+        step += node.get_output_name()
+
+        # if no table filter, remain original table name
+        if not node.table_filter:
+            increment = False
+
+    elif node.node_type == "Unique":
+        # combine unique and sort
+        if "Sort" in node.children[0].node_type:
+            node.children[0].set_output_name(node.children[0].children[0].get_output_name())
+            step = "sort " + node.children[0].get_output_name()
+            if node.children[0].sort_key:
+                step += " with attribute " + "parse_cond" + " and "
+            else:
+                step += " and "
+
+        step += "perform unique on table " + node.children[0].get_output_name()
+
+    elif node.node_type == "Aggregate":
+        for child in node.children:
+            # combine aggregate and sort
+            if "Sort" in child.node_type:
+                child.set_output_name(child.children[0].get_output_name())
+                step = "sort " + child.get_output_name() + " and "
+            # combine aggregate with scan
+            if "Scan" in child.node_type:
+                if child.node_type == "Seq Scan":
+                    step = "perform sequential scan on " + child.get_output_name() + " and "
+                else:
+                    step = "perform " + child.node_type.lower() + " on " + child.get_output_name() + " and "
+
+        step += "perform aggregate on table " + node.children[0].get_output_name()
+        if len(node.children) == 2:
+            step += " and table " + node.children[1].get_output_name()
+
+    elif node.node_type == "Sort":
+        step += "perform sort on table " + node.children[0].get_output_name() + " with attribute " + "parse_cond"
+
+    elif node.node_type == "Limit":
+        step += "limit the result from table " + node.children[0].get_output_name() + " to " + str(
+            node.plan_rows) + " record(s)"
+
+    else:
+        step += "perform " + node.node_type.lower() + " on"
+        # binary operator
+        if len(node.children) > 1:
+            for i, child in enumerate(node.children):
+                if i < len(node.children) - 1:
+                    step += (" table " + child.get_output_name() + ",")
+                else:
+                    step += (" and table " + child.get_output_name())
+        # unary operator
+        else:
+            step += " table " + node.children[0].get_output_name()
+
+    # add conditions
+    if node.group_key:
+        step += " with grouping on attribute " + "parse_cond"
+    if node.table_filter:
+        step += " and filtering on " +"parse_cond"
+    if node.join_filter:
+        step += " while filtering on " + "parse_cond"
+
+        # set intermediate table name
+    if increment:
+        node.set_output_name("T" + str(cur_table_name))
+        step += " to get intermediate table " + node.get_output_name()
+        cur_table_name += 1
+    if node.subplan_name:
+        table_subquery_name_pair[node.subplan_name] = node.get_output_name()
+
+    step = "Step " + str(cur_step) + ", " + step + "."
+    node.set_step(cur_step)
+    cur_step += 1
+
+    steps.append(step)
