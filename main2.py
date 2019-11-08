@@ -1,57 +1,84 @@
 import sys
+import json
 from PyQt5.Qt import QApplication, QClipboard
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QWidget, QPlainTextEdit, QVBoxLayout, QHBoxLayout, QPushButton, QGridLayout, QLabel,QLineEdit,QGroupBox, QGroupBox, QTabWidget
-from PyQt5.QtCore import QSize
-
+from PyQt5.QtWidgets import QMainWindow, QWidget, QPlainTextEdit, QVBoxLayout, QHBoxLayout, QPushButton, QGridLayout, QLabel,QLineEdit,QGroupBox, QGroupBox, QTabWidget,QMessageBox
+from PyQt5.QtCore import pyqtSlot, QSize
+from Connection import Connection
+import vocalizer2
 
 class Example(QWidget):
 
     def __init__(self):
         super().__init__()
 
+        self.connection = ''
+
         self.initUI()
+        self.initConnection()
 
     def initUI(self):
 
         # Start Database Connection section
+
+        self.lineedit_host = QLineEdit()
+        self.lineedit_port = QLineEdit()
+        self.lineedit_dbname = QLineEdit()
+        self.lineedit_username = QLineEdit()
+        self.lineedit_password = QLineEdit()
+
+
+
         database_section = QHBoxLayout()
         group_database = QGroupBox("Database connection")
         database_section.addWidget(group_database)
         database_layout = QVBoxLayout()
         database_inner_glayout = QGridLayout()
         database_inner_glayout.addWidget(QLabel("Host"), 0, 0) # Label at row 0, column 0
-        database_inner_glayout.addWidget(QLineEdit(),0,1) # LineEdit at row 0, column 1
+        database_inner_glayout.addWidget(self.lineedit_host,0,1) # LineEdit at row 0, column 1
         database_inner_glayout.addWidget(QLabel("Port"), 1, 0)
-        database_inner_glayout.addWidget(QLineEdit(), 1, 1)
+        database_inner_glayout.addWidget(self.lineedit_port, 1, 1)
         database_inner_glayout.addWidget(QLabel("DBname"), 2, 0)
-        database_inner_glayout.addWidget(QLineEdit(), 2, 1)
+        database_inner_glayout.addWidget(self.lineedit_dbname, 2, 1)
         database_inner_glayout.addWidget(QLabel("Username"), 0, 2)
-        database_inner_glayout.addWidget(QLineEdit(), 0, 3)
+        database_inner_glayout.addWidget(self.lineedit_username, 0, 3)
         database_inner_glayout.addWidget(QLabel("Password"), 1, 2)
-        database_inner_glayout.addWidget(QLineEdit(), 1, 3)
+        database_inner_glayout.addWidget(self.lineedit_password, 1, 3)
 
         database_inner_hbox = QHBoxLayout()
         database_inner_hbox.addStretch()
-        database_inner_hbox.addWidget(QPushButton("Connect"))
+        database_inner_hbox.addWidget(QPushButton("Hello"))
+
+        button = QPushButton("Connect", self)
+        button.clicked.connect(self.click_connect)
+        database_inner_hbox.addWidget(button)
+
+        database_inner_glayout.addWidget(button, 2, 3)
 
         database_layout.addLayout(database_inner_glayout)
-        database_layout.addLayout(database_inner_hbox)
+        #database_layout.addLayout(database_inner_hbox)
         group_database.setLayout(database_layout)
 
         # start of enter two query for execution (to produce query plan) section
+
+        self.plaintextedit_query1 = QPlainTextEdit()
+        self.plaintextedit_query2 = QPlainTextEdit()
+
+        button_generate_query_plans = QPushButton("Generate Query Plans")
+        button_generate_query_plans.clicked.connect(self.click_generate_query_plans)
+
         query_statement_section = QHBoxLayout()
         group_query_statement = QGroupBox("1. Enter Two Query")
         query_statement_section.addWidget(group_query_statement)
 
         query_statement_layout = QVBoxLayout()
         query_statement_inner_glayout = QGridLayout()
-        query_statement_inner_glayout.addWidget(QPlainTextEdit(), 0,0)
-        query_statement_inner_glayout.addWidget(QPlainTextEdit(), 0,1)
+        query_statement_inner_glayout.addWidget(self.plaintextedit_query1, 0,0)
+        query_statement_inner_glayout.addWidget(self.plaintextedit_query2, 0,1)
 
         query_statement_inner_hbox = QHBoxLayout()
         query_statement_inner_hbox.addStretch()
-        query_statement_inner_hbox.addWidget(QPushButton("Generate Query Plans"))
+        query_statement_inner_hbox.addWidget(button_generate_query_plans)
 
         query_statement_layout.addLayout(query_statement_inner_glayout)
         query_statement_layout.addLayout(query_statement_inner_hbox)
@@ -78,8 +105,9 @@ class Example(QWidget):
 
         # left tabs' content
         # query plan
+        self.plaintextedit_queryplan1 = QPlainTextEdit()
         left_tab1_inner_vbox = QVBoxLayout()
-        left_tab1_inner_vbox.addWidget(QPlainTextEdit("Contains query 1's query plan"))
+        left_tab1_inner_vbox.addWidget(self.plaintextedit_queryplan1)
         left_tab1.setLayout(left_tab1_inner_vbox)
 
         # query explaination
@@ -97,8 +125,9 @@ class Example(QWidget):
 
         # right tabs' content
         # query plan
+        self.plaintextedit_queryplan2 = QPlainTextEdit()
         right_tab1_inner_vbox = QVBoxLayout()
-        right_tab1_inner_vbox.addWidget(QPlainTextEdit("Contains query 2's query plan"))
+        right_tab1_inner_vbox.addWidget(self.plaintextedit_queryplan2)
         right_tab1.setLayout(right_tab1_inner_vbox)
 
         # query explaination
@@ -140,6 +169,60 @@ class Example(QWidget):
         self.setLayout(vbox)
         self.setWindowTitle('CZ4031')
         self.show()
+
+
+    def initConnection(self):
+        with open('conf.example.json', 'r') as f:
+            connection_dict = json.load(f)
+            print(connection_dict['db'])
+            self.lineedit_host.setText(connection_dict['db']['host'])
+            self.lineedit_port.setText(str(connection_dict['db']['port']))
+            self.lineedit_dbname.setText(connection_dict['db']['dbname'])
+            self.lineedit_username.setText(connection_dict['db']['username'])
+            self.lineedit_password.setText(connection_dict['db']['password'])
+
+    def pop_up_message(self,message):
+        QMessageBox.about(self, "Alert", message)
+
+    def click_connect(self):
+        host = self.lineedit_host.text()
+        port = self.lineedit_port.text()
+        dbname = self.lineedit_dbname.text()
+        username = self.lineedit_username.text()
+        password = self.lineedit_password.text()
+
+        con = Connection()
+        con.override_configuration(host=host,port=port,dbname=dbname,username=username,password=password)
+        con.connect()
+        if (con != None):
+            self.pop_up_message("Connected")
+
+        self.connection = con
+
+    def click_generate_query_plans(self):
+        print("generate query plans")
+        if not self.plaintextedit_query1.toPlainText().strip() or not self.plaintextedit_query2.toPlainText().strip():
+            self.pop_up_message("Please ensure both box has SQL query")
+            return
+
+        if not self.connection:
+            self.pop_up_message("Please connect to PostgesSQL server first.")
+            return
+
+       #try:
+        query_plan1 = self.connection.query_json(self.plaintextedit_query1.toPlainText())
+        #query_plan2 = self.connection.query_json(self.plaintextedit_query2.toPlainText())
+        asd = vocalizer2.parse_json(query_plan1)
+        print("asdasdasd")
+        #vocalizer2.simplify_graph(asd)
+        self.plaintextedit_queryplan1.setPlainText(str(query_plan1))
+        #self.plaintextedit_queryplan2.setPlainText(str(query_plan2))
+        #except:
+            #print("error")
+
+
+
+
 
 
 if __name__ == '__main__':
