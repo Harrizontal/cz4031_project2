@@ -1,4 +1,4 @@
-from parser import parse_json, convert_tree_string
+from parser_analyzer import parse_json, convert_tree_string
 from ete3 import Tree
 import json
 

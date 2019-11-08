@@ -185,11 +185,11 @@ class Example(QWidget):
         with open('conf.json', 'r') as f:
             connection_dict = json.load(f)
             print(connection_dict['db'])
-            self.lineedit_host.setText(connection_dict['db']['host'])
+            self.lineedit_host.setText(str(connection_dict['db']['host']))
             self.lineedit_port.setText(str(connection_dict['db']['port']))
-            self.lineedit_dbname.setText(connection_dict['db']['dbname'])
-            self.lineedit_username.setText(connection_dict['db']['username'])
-            self.lineedit_password.setText(connection_dict['db']['password'])
+            self.lineedit_dbname.setText(str(connection_dict['db']['dbname']))
+            self.lineedit_username.setText(str(connection_dict['db']['username']))
+            self.lineedit_password.setText(str(connection_dict['db']['password']))
 
     def pop_up_message(self,message):
         QMessageBox.about(self, "Alert", message)
