@@ -182,7 +182,7 @@ class Example(QWidget):
 
 
     def initConnection(self):
-        with open('conf.json', 'r') as f:
+        with open('config.json', 'r') as f:
             connection_dict = json.load(f)
             print(connection_dict['db'])
             self.lineedit_host.setText(str(connection_dict['db']['host']))

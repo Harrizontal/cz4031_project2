@@ -4,7 +4,7 @@ import psycopg2
 
 class Connection:
     def __init__(self):
-        with open('conf.json', 'r') as f:
+        with open('config.json', 'r') as f:
             conf = json.load(f)
             self.dbname = conf['db']['dbname']
             self.username = conf['db']['username']

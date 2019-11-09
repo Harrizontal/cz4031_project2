@@ -1,0 +1,9 @@
+{
+	"db":{
+		"host":"192.168.99.100",
+		"port":"54320",
+		"dbname":"tpch",
+		"username":"dsp",
+		"password":"dsp"
+	}
+}

@@ -205,7 +205,9 @@ def to_text(node, skip=False):
                 else:
                     step += (" and table " + child.get_output_name())
             # combine hash with hash join
-            step = "hash table " + hashed_table + step + " under condition " + "parse_cond"
+            # step = "hash table " + hashed_table + step + " under condition " + "hash cond"
+            step = "hash table " + hashed_table + step + " under condition " + \
+                   node.hash_cond.replace("::text", "") + "."
 
         elif "Merge" in node.node_type:
             step += "perform " + node.node_type.lower() + " on "
@@ -233,7 +235,7 @@ def to_text(node, skip=False):
         # combine bitmap heap scan and bitmap index scan
         if "Bitmap Index Scan" in node.children[0].node_type:
             node.children[0].set_output_name(node.relation_name)
-            step = " with index condition " + "parse_cond"
+            step = " with index condition " + node.index_cond.replace("::text", "")
 
         step = "perform bitmap heap scan on table " + node.children[0].get_output_name() + step
 
@@ -255,7 +257,7 @@ def to_text(node, skip=False):
             node.children[0].set_output_name(node.children[0].children[0].get_output_name())
             step = "sort " + node.children[0].get_output_name()
             if node.children[0].sort_key:
-                step += " with attribute " + "parse_cond" + " and "
+                step += " with attribute " + node.sort_key.replace(":::text", "") + " and "
             else:
                 step += " and "
 
@@ -279,7 +281,19 @@ def to_text(node, skip=False):
             step += " and table " + node.children[1].get_output_name()
 
     elif node.node_type == "Sort":
-        step += "perform sort on table " + node.children[0].get_output_name() + " with attribute " + "parse_cond"
+        step += "perform sort on table "
+        if "DESC" in node.sort_key:
+            step += node.sort_key.replace('DESC', '') + " in decreasing order "
+        elif "INC" in node.sort_key:
+            step += node.sort_key.replace('INC', '') + " in increasing order "
+
+        # step += "perform sort on table "
+        # if len(node.sort_key) == 1:
+        #     step += node.sort_key[0].replace("::text", "")
+        # else:
+        #     for i in node.sort_key[:-1]:
+        #         step += i.replace("::text", "") + ", "
+        #     step += node.sort_key[-1].replace("::text", "")
 
     elif node.node_type == "Limit":
         step += "limit the result from table " + node.children[0].get_output_name() + " to " + str(
@@ -300,11 +314,17 @@ def to_text(node, skip=False):
 
     # add conditions
     if node.group_key:
-        step += " with grouping on attribute " + "parse_cond"
+        if len(node.group_key) == 1:
+            step += " with grouping on attribute " + node.group_key[0].replace("::text", "")
+        else:
+            step += " with grouping on attribute "
+            for i in node.group_key[:-1]:
+                step += i.replace("::text", "") + ", "
+            step += node.group_key[-1].replace("::text", "")
     if node.table_filter:
-        step += " and filtering on " +"parse_cond"
+        step += " and filtering on " + node.table_filter.replace(":::text", "")
     if node.join_filter:
-        step += " while filtering on " + "parse_cond"
+        step += " while filtering on " + node.join_filter.replace(":::text", "")
 
         # set intermediate table name
     if increment:
