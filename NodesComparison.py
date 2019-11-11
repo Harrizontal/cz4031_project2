@@ -24,7 +24,7 @@ class NodesComparison:
     """
     def get_tables_for_join(self,node):
         if node.relation_name != None:
-            self.store_get_tables_for_join.append(node.relation_name)
+            self.store_get_tables_for_join.append(node)
 
         if node.children != None:
             for child_node in node.children:
@@ -60,10 +60,16 @@ class NodesComparison:
         # print("List of joins in query 1:")
         # for node in self.store_get_all_nodes_type_1:
         #     print(node.node_type)
+        #     for child in node.children:
+        #         print(child.node_type)
+        #     print("----")
         #
         # print("List of joins in query 2:")
         # for node in self.store_get_all_nodes_type_2:
         #     print(node.node_type)
+        #     for child in node.children:
+        #         print(child.node_type)
+        #     print("----")
 
         # check for different join, and join with different tables
         nodes_and_tables_1 = self.get_node_and_tables(self.store_get_all_nodes_type_1)
@@ -71,8 +77,18 @@ class NodesComparison:
 
         # print("List of joins and their tables for first query:")
         # print(nodes_and_tables_1)
+        # for nodes in nodes_and_tables_1:
+        #     print(nodes[0].node_type)
+        #     for child_nodes in nodes[1]:
+        #         print(child_nodes.node_type + " on "+child_nodes.relation_name)
+        #     print("---")
         # print("List of joins and their tables for second query:")
         # print(nodes_and_tables_2)
+        # for nodes in nodes_and_tables_2:
+        #     print(nodes[0].node_type)
+        #     for child_nodes in nodes[1]:
+        #         print(child_nodes.node_type + " on "+child_nodes.relation_name)
+        #     print("---")
 
         compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
 
@@ -80,9 +96,26 @@ class NodesComparison:
         match = False
         for node1 in nodes_and_tables_1:
             for node2 in nodes_and_tables_2:
-                # if both has the same table, but different type of join
-                if compare(node1[1],node2[1]) and node1[0].node_type != node2[0].node_type:
-                    print(node1[0].node_type + " in query 1 has evolved to "+node2[0].node_type + " but still uses the same tables ("+','.join(node2[1])+")")
+
+                relation_name_array_1 = self.convert_node_array_to_relation_name_array(node1[1])
+                relation_name_array_2 = self.convert_node_array_to_relation_name_array(node2[1])
+
+                # if both joins uses the same tables, but different type of join
+                if compare(relation_name_array_1,relation_name_array_2) and node1[0].node_type != node2[0].node_type:
+                    print(node1[0].node_type + " in query 1 has evolved to "+node2[0].node_type + " and still uses the same tables ("+','.join(relation_name_array_2)+")")
+
+                    leave_nodes_array_1 = node1[1]
+                    leave_nodes_array_2 = node2[1]
+
+                    # now lets compare the leaves nodes of the join.
+                    for leave_node1 in leave_nodes_array_1:
+                        for leave_node2 in leave_nodes_array_2:
+                            # if we found a matching table for both query,
+                            #print(leave_node1.node_type + " "+leave_node2.node_type +" "+leave_node1.relation_name + " "+leave_node2.relation_name)
+                            if leave_node1.relation_name == leave_node2.relation_name:
+                                if leave_node1.node_type != leave_node2.node_type:
+                                    print("In addition, for the table, "+leave_node2.relation_name+", the scan has changed from " +leave_node1.node_type + " to "+leave_node2.node_type)
+
                     del nodes_and_tables_2[count_node2] # remove item from array, since is already matched
                     match = True
 
@@ -91,10 +124,14 @@ class NodesComparison:
             count_node2 = 0
             # if there is no match, this means that join is not found in query 2
             if match != True:
-                print(node1[0].node_type +" (" +','.join(node1[1]) + ") is not used in query 2 though.")
+                relation_name_array = self.convert_node_array_to_relation_name_array(node1[1])
+                print(node1[0].node_type +" (" +','.join(relation_name_array) + ") is not used in query 2 though.")
                 match = False
 
 
-
-
+    def convert_node_array_to_relation_name_array(self,node_array):
+        relation_names = []
+        for node in node_array:
+            relation_names.append(node.relation_name)
+        return relation_names
 
