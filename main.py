@@ -118,7 +118,8 @@ class Example(QWidget):
 
         # query explaination
         left_tab2_inner_vbox = QVBoxLayout()
-        left_tab2_inner_vbox.addWidget(QPlainTextEdit("Contains query 1's explaination"))
+        self.query_one_explanation = QPlainTextEdit()
+        left_tab2_inner_vbox.addWidget(self.query_one_explanation)
         left_tab2.setLayout(left_tab2_inner_vbox)
 
         # right's tabs
@@ -142,7 +143,8 @@ class Example(QWidget):
 
         # query explaination
         right_tab2_inner_vbox = QVBoxLayout()
-        right_tab2_inner_vbox.addWidget(QPlainTextEdit("Contains query 2's explaination"))
+        self.query_two_explaination = QPlainTextEdit()
+        right_tab2_inner_vbox.addWidget(self.query_two_explaination)
         right_tab2.setLayout(right_tab2_inner_vbox)
 
         # end of tabs
@@ -222,12 +224,12 @@ class Example(QWidget):
         self.session = Session(self.connection, self.plaintextedit_query1.toPlainText(), self.plaintextedit_query2.toPlainText())
         self.query_one_button.setEnabled(True)
         self.query_two_button.setEnabled(True)
-        self.plaintextedit_queryplan1.setPlainText(str(self.session.query_one_qep_raw))
-        self.plaintextedit_queryplan2.setPlainText(str(self.session.query_two_qep_raw))
-        asd = vocalizer2.parse_json(self.session.query_one_qep_raw)
-
-        asdasd  = vocalizer2.textVersion(asd)
-        print(asdasd)
+        self.plaintextedit_queryplan1.setPlainText(str(json.dumps(self.session.query_one_qep_raw)))
+        self.plaintextedit_queryplan2.setPlainText(str(json.dumps(self.session.query_two_qep_raw)))
+        query_one_explanation_list  = vocalizer2.textVersion(self.session.query_one_qep_root_node)
+        query_two_explanation_list = vocalizer2.textVersion(self.session.query_two_qep_root_node)
+        self.query_one_explanation.setPlainText("\n".join(query_one_explanation_list))
+        self.query_two_explaination.setPlainText("\n".join(query_two_explanation_list))
 
     def click_show_query_one_tree(self):
         self.session.show_query_one_graph()
