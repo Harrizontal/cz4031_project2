@@ -241,6 +241,7 @@ def to_text(node, skip=False):
     elif "Scan" in node.node_type:
         if node.node_type == "Seq Scan":
             step += "perform sequential scan on table "
+            step += node.get_output_name()
         elif node.node_type == "Bitmap Heap Scan":
             if "Bitmap Index Scan" in node.children[0].node_type:
                 node.children[0].set_output_name(node.relation_name)
@@ -248,8 +249,7 @@ def to_text(node, skip=False):
                         " with index condition " + node.children[0].index_cond.replace("::text", "")
         else:
             step += "perform " + node.node_type.lower() + " on table "
-
-        step += node.get_output_name()
+            step += node.get_output_name()
 
         # if no table filter, remain original table name
         if not node.table_filter:
