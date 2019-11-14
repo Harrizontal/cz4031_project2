@@ -231,17 +231,21 @@ def to_text(node, skip=False):
                             sort_step += (" and table " + child.get_output_name())
                 step = sort_step + " and " + step
 
-    elif node.node_type == "Bitmap Heap Scan":
+    # elif node.node_type == "Bitmap Heap Scan":
         # combine bitmap heap scan and bitmap index scan
-        if "Bitmap Index Scan" in node.children[0].node_type:
-            node.children[0].set_output_name(node.relation_name)
-            step = " with index condition " + node.index_cond.replace("::text", "")
-
-        step = "perform bitmap heap scan on table " + node.children[0].get_output_name() + step
+        # if "Bitmap Index Scan" in node.children[0].node_type:
+        #     node.children[0].set_output_name(node.relation_name)
+        #     step = " with index condition " + node.index_cond.replace("::text", "")
+        # step += "perform bitmap heap scan on table " + node.children[0].get_output_name() + step
 
     elif "Scan" in node.node_type:
         if node.node_type == "Seq Scan":
             step += "perform sequential scan on table "
+        elif node.node_type == "Bitmap Heap Scan":
+            if "Bitmap Index Scan" in node.children[0].node_type:
+                node.children[0].set_output_name(node.relation_name)
+                step += "performs bitmap heap scan on table " + node.children[0].get_output_name() +\
+                        " with index condition " + node.children[0].index_cond.replace("::text", "")
         else:
             step += "perform " + node.node_type.lower() + " on table "
 
