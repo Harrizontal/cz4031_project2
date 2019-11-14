@@ -7,6 +7,7 @@ from PyQt5.QtCore import pyqtSlot, QSize
 from Connection import Connection
 import vocalizer2
 from Session import Session
+import psycopg2
 
 class Example(QWidget):
 
@@ -196,18 +197,22 @@ class Example(QWidget):
     def pop_up_message(self,message):
         QMessageBox.about(self, "Alert", message)
 
-    def click_connect(self):
+    def click_connect(self, show_connected=False):
         host = self.lineedit_host.text()
         port = self.lineedit_port.text()
         dbname = self.lineedit_dbname.text()
         username = self.lineedit_username.text()
         password = self.lineedit_password.text()
+        con = None
+        try:
+            con = Connection()
+            con.override_configuration(host=host,port=port,dbname=dbname,username=username,password=password)
+            con.connect()
+            if not show_connected:
+                self.pop_up_message("Connected")
 
-        con = Connection()
-        con.override_configuration(host=host,port=port,dbname=dbname,username=username,password=password)
-        con.connect()
-        if (con != None):
-            self.pop_up_message("Connected")
+        except psycopg2.Error as e:
+            self.show_error_message("Cannot connect to db")
 
         self.connection = con
 
@@ -220,8 +225,13 @@ class Example(QWidget):
         if not self.connection:
             self.pop_up_message("Please connect to PostgesSQL server first.")
             return
+        try:
+            self.session = Session(self.connection, self.plaintextedit_query1.toPlainText(), self.plaintextedit_query2.toPlainText())
+        except psycopg2.Error as e:
+            self.show_error_message(e.pgerror)
+            self.click_connect(True)
+            return
 
-        self.session = Session(self.connection, self.plaintextedit_query1.toPlainText(), self.plaintextedit_query2.toPlainText())
         self.query_one_button.setEnabled(True)
         self.query_two_button.setEnabled(True)
         self.plaintextedit_queryplan1.setPlainText(str(json.dumps(self.session.query_one_qep_raw)))
@@ -236,6 +246,9 @@ class Example(QWidget):
 
     def click_show_query_two_tree(self):
         self.session.show_query_two_graph()
+
+    def show_error_message(self, message, error="Error"):
+        QMessageBox.about(self, error, message)
 
 
 if __name__ == '__main__':
