@@ -142,29 +142,3 @@ def convert_tree_string(node):
     lstr += ")%s" % node.node_type
     print(lstr)
     return lstr
-
-def to_text(node, skip = False):
-    global steps, cur_step, cur_table
-
-    # skip the child if merge it with current node
-    if node.node_type in ["Unique", "Aggregate"] and len(node.children) == 1 \
-            and ("Scan" in node.children[0].node_type or node.children[0].node_type == "Sort"):
-        children_skip = True
-    elif node.node_type == "Bitmap Heap Scan" and node.children[0].node_type == "Bitmap Index Scan":
-        children_skip = True
-    else:
-        children_skip = False
-
-        # recursive
-        for child in node.children:
-            if node.node_type == "Aggregate" and len(node.children) > 1 and child.node_type == "Sort":
-                to_text(child, True)
-            else:
-                to_text(child, children_skip)
-
-        if node.node_type in ["Hash"] or skip:
-            return
-
-        step = ""
-
-        # if(node.node_type ==)

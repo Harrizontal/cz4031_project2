@@ -1,9 +1,0 @@
-{
-	"db":{
-		"host":"localhost",
-		"port":"54320",
-		"dbname":"tpch",
-		"username":"dsp",
-		"password":"dsp"
-	}
-}
