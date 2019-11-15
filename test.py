@@ -153,38 +153,38 @@ import json
 
 
 # comparison 6
-query_one = '''
-SELECT supplier.s_suppkey, supplier.s_name, supplier.s_acctbal, nation.n_name
-FROM supplier, nation
-WHERE supplier.s_nationkey = nation.n_nationkey
-AND nation.n_name = 'GERMANY'
-GROUP BY supplier.s_suppkey, nation.n_name
-ORDER BY supplier.s_acctbal
-'''
-
-query_two='''
-SELECT supplier.s_suppkey, supplier.s_name, supplier.s_acctbal, nation.n_name
-FROM supplier, nation
-WHERE supplier.s_nationkey = nation.n_nationkey
-AND nation.n_name = 'GERMANY'
-GROUP BY supplier.s_suppkey
-ORDER BY supplier.s_acctbal
+# query_one = '''
+# SELECT supplier.s_suppkey, supplier.s_name, supplier.s_acctbal, nation.n_name
+# FROM supplier, nation
+# WHERE supplier.s_nationkey = nation.n_nationkey
+# AND nation.n_name = 'GERMANY'
+# GROUP BY supplier.s_suppkey, nation.n_name
+# ORDER BY supplier.s_acctbal
+# '''
+# 
+# query_two='''
+# SELECT supplier.s_suppkey, supplier.s_name, supplier.s_acctbal, nation.n_name
+# FROM supplier, nation
+# WHERE supplier.s_nationkey = nation.n_nationkey
+# AND nation.n_name = 'GERMANY'
+# GROUP BY supplier.s_suppkey
+# ORDER BY supplier.s_acctbal
 '''
 '''
 # ---- yi ern and kenneth -----
 
-# query_one = '''
-# SELECT *
-# FROM supplier, lineitem, part
-# WHERE supplier.s_suppkey = lineitem.l_suppkey
-# AND lineitem.l_partkey = part.p_partkey
-# '''
-#
-# query_two = '''
-# SELECT * FROM
-# supplier, lineitem, orders
-# WHERE s_suppkey = l_suppkey AND l_orderkey = o_orderkey;
-# '''
+query_one = '''
+SELECT *
+FROM supplier, lineitem, part
+WHERE supplier.s_suppkey = lineitem.l_suppkey
+AND lineitem.l_partkey = part.p_partkey
+'''
+
+query_two = '''
+SELECT * FROM
+supplier, lineitem, orders
+WHERE s_suppkey = l_suppkey AND l_orderkey = o_orderkey;
+'''
 
 con = Connection()
 con.connect()

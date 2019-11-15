@@ -68,7 +68,7 @@ class NodesComparison:
         return nodes_and_tables
 
     def compare_joins(self):
-
+        compareString = ""
         # clear attribute of this class
         self.store_get_all_nodes_type.clear()
         self.store_get_tables_for_join.clear()
@@ -161,7 +161,7 @@ class NodesComparison:
                 if self.is_there_similiarities(node1, node2):
                     # check what is the difference between this two join nodes,
                     # and check whether they have the same table used, and the types of scan they used.
-                    self.difference(node1, node2)
+                    compareString += self.difference(node1, node2)
 
                     # store all the tables in the array so that for the next loop, it WILL NOT print duplicate changes.
                     self.store_tables(node1)
@@ -189,7 +189,7 @@ class NodesComparison:
             for table in node.tables:
                 string_table = string_table + table.relation_name + " "
             string_table = string_table.strip()
-            print("The "+node.node_type +" node with tables of "+string_table+" in Query 1 is not used in Query 2.")
+            compareString = "The "+node.node_type +" node with tables of "+string_table+" in Query 1 is not used in Query 2."
 
         # Those nodes that are not similar at all, will be push to all_join_node_full_difference
         # We can say this nodes is does not appear in the previous query (query 1) at all.
@@ -198,7 +198,9 @@ class NodesComparison:
             for table in node.tables:
                 string_table = string_table + table.relation_name + " "
             string_table = string_table.strip()
-            print("There is a new "+node.node_type+" node with tables of "+string_table+ " in Query 2 ")
+            compareString += "There is a new "+node.node_type+" node with tables of "+string_table+ " in Query 2 "
+
+        return compareString
 
     def store_tables(self, node):
         for node in node.tables:
@@ -224,10 +226,11 @@ class NodesComparison:
     # check whether both join node uses the same/different no. of tables,
     # and check whether the tables that are the same uses the same scan (index, bitmap, seq scan)
     def difference(self, node1, node2):
+        diffString = ""
         previous_node = node1
         current_node = node2
         if node1.node_type != node2.node_type:
-            print("The "+node1.node_type +" (Level "+str(node1.level)+") in Query 1 has evolved to "+node2.node_type + " (Level "+str(node2.level)+ ") in Query 2")
+            diffString += "The "+node1.node_type + " (Level " + str(node1.level) + ") in Query 1 has evolved to " + node2.node_type + " (Level "+ str(node2.level) + ") in Query 2"
 
         dependency_nodes_1 = node1.tables.copy()  # query 1
         dependency_nodes_2 = node2.tables.copy()  # query 2
@@ -299,7 +302,8 @@ class NodesComparison:
             if pair[0][0].relation_name not in self.unique_tables_for_both_query:
                 for node1 in pair[0]:
                     for node2 in pair[1]:
-                        print("With the evolved "+current_node.node_type+", the type of scan has evolve from "+node1.node_type +" to "+node2.node_type +" for the table, "+node1.relation_name)
+                        # print("With the evolved "+current_node.node_type+", the type of scan has evolve from "+node1.node_type +" to "+node2.node_type +" for the table, "+node1.relation_name)
+                        diffString += "With the evolved "+current_node.node_type+ ", the type of scan has evolve from " + node1.node_type + " to " + node2.node_type + " for the table, " + node1.relation_name
                         pair[0].remove(node1)
                         pair[1].remove(node2)
 
@@ -337,14 +341,15 @@ class NodesComparison:
 
 
         if tables_used_in_q1_only and tables_used_in_q2_only:
-            print("It seems like the tables ("+string_table_used_in_q1_but_not_in_q2+
-                  ") for "+previous_node.node_type+" (Level "+str(previous_node.level)+
-                  ") in Query 1 is replaced with tables ("+string_table_used_in_q2_but_not_in_q1 + ") for "+current_node.node_type+" (Level "+str(current_node.level)+") in Query 2")
+            diffString += "It seems like the tables ("+string_table_used_in_q1_but_not_in_q2 + \
+                  ") for "+previous_node.node_type+" (Level "+str(previous_node.level) + \
+                  ") in Query 1 is replaced with tables ("+string_table_used_in_q2_but_not_in_q1 + ") for "+current_node.node_type+" (Level "+str(current_node.level)+") in Query 2"
         elif(not tables_used_in_q1_only and tables_used_in_q2_only):
-            print("It seems like that there is new tables ("+string_table_used_in_q2_but_not_in_q1+") used in Q2")
+            diffString += "It seems like that there is new tables ("+string_table_used_in_q2_but_not_in_q1+") used in Q2"
         elif(tables_used_in_q1_only and not tables_used_in_q2_only):
-            print("It seems like the "+current_node.node_type+" (Level "+str(current_node.level)+") for Query 2 did not use the tables ("+string_table_used_in_q1_but_not_in_q2+") used by the "+previous_node.node_type+" (Level "+str(previous_node.level)+") in Query 1 at all.")
+            diffString += "It seems like the "+current_node.node_type+" (Level "+str(current_node.level)+") for Query 2 did not use the tables ("+string_table_used_in_q1_but_not_in_q2+") used by the "+previous_node.node_type+" (Level "+str(previous_node.level)+") in Query 1 at all."
 
+        return diffString
 
     # def insert_table_pairs(self, node1, node2, table_pairs):
     #     found = False

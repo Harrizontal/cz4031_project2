@@ -8,6 +8,7 @@ from Connection import Connection
 import vocalizer2
 from Session import Session
 import psycopg2
+from NodesComparison import NodesComparison
 
 class Example(QWidget):
 
@@ -151,7 +152,9 @@ class Example(QWidget):
         # end of tabs
         query_result_inner_hbox = QHBoxLayout()
         query_result_inner_hbox.addStretch()
-        query_result_inner_hbox.addWidget(QPushButton("Generate differences"))
+        self.diff_button = QPushButton("Generate Differences")
+        query_result_inner_hbox.addWidget(self.diff_button)
+        self.diff_button.clicked.connect(self.handle_generate_difference)
 
 
         query_result_tabs_hbox.addWidget(left_tab_group)
@@ -167,7 +170,8 @@ class Example(QWidget):
         difference_section.addWidget(group_difference)
 
         difference_layout = QVBoxLayout()
-        difference_layout.addWidget(QPlainTextEdit("Difference"))
+        self.different_text = QPlainTextEdit()
+        difference_layout.addWidget(self.different_text)
         group_difference.setLayout(difference_layout)
         # end of difference between queries section
 
@@ -182,6 +186,11 @@ class Example(QWidget):
         self.setLayout(vbox)
         self.setWindowTitle('CZ4031')
         self.show()
+
+    def handle_generate_difference(self):
+        nc = NodesComparison(self.session.query_one_qep_root_node, self.session.query_two_qep_root_node)
+        difftext = nc.compare_joins()
+        self.different_text.setPlainText(difftext)
 
 
     def initConnection(self):
