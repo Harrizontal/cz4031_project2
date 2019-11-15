@@ -189,7 +189,7 @@ class NodesComparison:
             for table in node.tables:
                 string_table = string_table + table.relation_name + " "
             string_table = string_table.strip()
-            compareString = "The "+node.node_type +" node with tables of "+string_table+" in Query 1 is not used in Query 2."
+            compareString = "The "+node.node_type +" node with tables of "+string_table+" in Query 1 is not used in Query 2." + "\n"
 
         # Those nodes that are not similar at all, will be push to all_join_node_full_difference
         # We can say this nodes is does not appear in the previous query (query 1) at all.
@@ -198,7 +198,7 @@ class NodesComparison:
             for table in node.tables:
                 string_table = string_table + table.relation_name + " "
             string_table = string_table.strip()
-            compareString += "There is a new "+node.node_type+" node with tables of "+string_table+ " in Query 2 "
+            compareString += "There is a new "+node.node_type+" node with tables of "+string_table+ " in Query 2 " +"\n"
 
         return compareString
 
@@ -230,7 +230,7 @@ class NodesComparison:
         previous_node = node1
         current_node = node2
         if node1.node_type != node2.node_type:
-            diffString += "The "+node1.node_type + " (Level " + str(node1.level) + ") in Query 1 has evolved to " + node2.node_type + " (Level "+ str(node2.level) + ") in Query 2"
+            diffString += "The "+node1.node_type + " (Level " + str(node1.level) + ") in Query 1 has evolved to " + node2.node_type + " (Level "+ str(node2.level) + ") in Query 2" + "\n"
 
         dependency_nodes_1 = node1.tables.copy()  # query 1
         dependency_nodes_2 = node2.tables.copy()  # query 2
@@ -303,7 +303,7 @@ class NodesComparison:
                 for node1 in pair[0]:
                     for node2 in pair[1]:
                         # print("With the evolved "+current_node.node_type+", the type of scan has evolve from "+node1.node_type +" to "+node2.node_type +" for the table, "+node1.relation_name)
-                        diffString += "With the evolved "+current_node.node_type+ ", the type of scan has evolve from " + node1.node_type + " to " + node2.node_type + " for the table, " + node1.relation_name
+                        diffString += "With the evolved "+current_node.node_type+ ", the type of scan has evolve from " + node1.node_type + " to " + node2.node_type + " for the table, " + node1.relation_name + "\n"
                         pair[0].remove(node1)
                         pair[1].remove(node2)
 
@@ -343,11 +343,11 @@ class NodesComparison:
         if tables_used_in_q1_only and tables_used_in_q2_only:
             diffString += "It seems like the tables ("+string_table_used_in_q1_but_not_in_q2 + \
                   ") for "+previous_node.node_type+" (Level "+str(previous_node.level) + \
-                  ") in Query 1 is replaced with tables ("+string_table_used_in_q2_but_not_in_q1 + ") for "+current_node.node_type+" (Level "+str(current_node.level)+") in Query 2"
+                  ") in Query 1 is replaced with tables ("+string_table_used_in_q2_but_not_in_q1 + ") for "+current_node.node_type+" (Level "+str(current_node.level)+") in Query 2" + "\n"
         elif(not tables_used_in_q1_only and tables_used_in_q2_only):
-            diffString += "It seems like that there is new tables ("+string_table_used_in_q2_but_not_in_q1+") used in Q2"
+            diffString += "It seems like that there is new tables ("+string_table_used_in_q2_but_not_in_q1+") used in Q2" + "\n"
         elif(tables_used_in_q1_only and not tables_used_in_q2_only):
-            diffString += "It seems like the "+current_node.node_type+" (Level "+str(current_node.level)+") for Query 2 did not use the tables ("+string_table_used_in_q1_but_not_in_q2+") used by the "+previous_node.node_type+" (Level "+str(previous_node.level)+") in Query 1 at all."
+            diffString += "It seems like the "+current_node.node_type+" (Level "+str(current_node.level)+") for Query 2 did not use the tables ("+string_table_used_in_q1_but_not_in_q2+") used by the "+previous_node.node_type+" (Level "+str(previous_node.level)+") in Query 1 at all."+"\n"
 
         return diffString
 
