@@ -10,7 +10,7 @@ from Session import Session
 import psycopg2
 from NodesComparison import NodesComparison
 
-class Example(QWidget):
+class MainUserInterface(QWidget):
 
     def __init__(self):
         super().__init__()
@@ -262,5 +262,5 @@ class Example(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = Example()
+    ex = MainUserInterface()
     sys.exit(app.exec_())
