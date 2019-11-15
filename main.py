@@ -7,6 +7,7 @@ from PyQt5.QtCore import pyqtSlot, QSize
 from Connection import Connection
 import vocalizer2
 from Session import Session
+import psycopg2
 
 class Example(QWidget):
 
@@ -118,7 +119,8 @@ class Example(QWidget):
 
         # query explaination
         left_tab2_inner_vbox = QVBoxLayout()
-        left_tab2_inner_vbox.addWidget(QPlainTextEdit("Contains query 1's explaination"))
+        self.query_one_explanation = QPlainTextEdit()
+        left_tab2_inner_vbox.addWidget(self.query_one_explanation)
         left_tab2.setLayout(left_tab2_inner_vbox)
 
         # right's tabs
@@ -142,7 +144,8 @@ class Example(QWidget):
 
         # query explaination
         right_tab2_inner_vbox = QVBoxLayout()
-        right_tab2_inner_vbox.addWidget(QPlainTextEdit("Contains query 2's explaination"))
+        self.query_two_explaination = QPlainTextEdit()
+        right_tab2_inner_vbox.addWidget(self.query_two_explaination)
         right_tab2.setLayout(right_tab2_inner_vbox)
 
         # end of tabs
@@ -194,18 +197,22 @@ class Example(QWidget):
     def pop_up_message(self,message):
         QMessageBox.about(self, "Alert", message)
 
-    def click_connect(self):
+    def click_connect(self, show_connected=False):
         host = self.lineedit_host.text()
         port = self.lineedit_port.text()
         dbname = self.lineedit_dbname.text()
         username = self.lineedit_username.text()
         password = self.lineedit_password.text()
+        con = None
+        try:
+            con = Connection()
+            con.override_configuration(host=host,port=port,dbname=dbname,username=username,password=password)
+            con.connect()
+            if not show_connected:
+                self.pop_up_message("Connected")
 
-        con = Connection()
-        con.override_configuration(host=host,port=port,dbname=dbname,username=username,password=password)
-        con.connect()
-        if (con != None):
-            self.pop_up_message("Connected")
+        except psycopg2.Error as e:
+            self.show_error_message("Cannot connect to db")
 
         self.connection = con
 
@@ -218,22 +225,30 @@ class Example(QWidget):
         if not self.connection:
             self.pop_up_message("Please connect to PostgesSQL server first.")
             return
+        try:
+            self.session = Session(self.connection, self.plaintextedit_query1.toPlainText(), self.plaintextedit_query2.toPlainText())
+        except psycopg2.Error as e:
+            self.show_error_message(e.pgerror)
+            self.click_connect(True)
+            return
 
-        self.session = Session(self.connection, self.plaintextedit_query1.toPlainText(), self.plaintextedit_query2.toPlainText())
         self.query_one_button.setEnabled(True)
         self.query_two_button.setEnabled(True)
-        self.plaintextedit_queryplan1.setPlainText(str(self.session.query_one_qep_raw))
-        self.plaintextedit_queryplan2.setPlainText(str(self.session.query_two_qep_raw))
-        asd = vocalizer2.parse_json(self.session.query_one_qep_raw)
-
-        asdasd  = vocalizer2.textVersion(asd)
-        print(asdasd)
+        self.plaintextedit_queryplan1.setPlainText(str(json.dumps(self.session.query_one_qep_raw)))
+        self.plaintextedit_queryplan2.setPlainText(str(json.dumps(self.session.query_two_qep_raw)))
+        query_one_explanation_list  = vocalizer2.textVersion(self.session.query_one_qep_root_node)
+        query_two_explanation_list = vocalizer2.textVersion(self.session.query_two_qep_root_node)
+        self.query_one_explanation.setPlainText("\n".join(query_one_explanation_list))
+        self.query_two_explaination.setPlainText("\n".join(query_two_explanation_list))
 
     def click_show_query_one_tree(self):
         self.session.show_query_one_graph()
 
     def click_show_query_two_tree(self):
         self.session.show_query_two_graph()
+
+    def show_error_message(self, message, error="Error"):
+        QMessageBox.about(self, error, message)
 
 
 if __name__ == '__main__':

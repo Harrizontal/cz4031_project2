@@ -4,7 +4,7 @@ import psycopg2
 
 class Connection:
     def __init__(self):
-        with open('config.json', 'r') as f:
+        with open('conf.json', 'r') as f:
             conf = json.load(f)
             self.dbname = conf['db']['dbname']
             self.username = conf['db']['username']
@@ -38,6 +38,7 @@ class Connection:
     Call this method when you ready to connect to db
     """
     def connect(self):
+
         self.conn = psycopg2.connect(dbname=self.dbname, user=self.username, password=self.password, host=self.host,
                                      port=self.port)
         self.cursor = self.conn.cursor()

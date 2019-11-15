@@ -10,6 +10,7 @@ import json
 # where supplier.s_nationkey = nation.n_nationkey and nation.n_regionkey = region.r_regionkey
 # '''
 
+<<<<<<< HEAD
 # query_one = '''
 # SELECT *
 # FROM customer JOIN orders
@@ -44,6 +45,23 @@ import json
 # ON r_regionkey = n_regionkey
 # '''
 
+=======
+query_one = '''
+SELECT * FROM nation, customer, orders, region
+WHERE orders.o_custkey = customer.c_custkey
+AND customer.c_nationkey = nation.n_nationkey
+AND nation.n_regionkey = region.r_regionkey
+AND customer.c_custkey = 20;
+'''
+
+query_two = '''
+SELECT * FROM nation, customer, orders, region
+WHERE orders.o_custkey = customer.c_custkey
+AND customer.c_nationkey = nation.n_nationkey
+AND nation.n_regionkey = region.r_regionkey
+AND region.r_regionkey = 0;
+'''
+>>>>>>> 7bb35f826015f07eea4539869e2b3d639171be5a
 # query_two = '''
 # SELECT * FROM
 # region CROSS JOIN nation
