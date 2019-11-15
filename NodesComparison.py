@@ -1,48 +1,6 @@
 import collections
 
 
-<<<<<<< HEAD
-=======
-def intersection(first_node_list, second_node_list):
-    results = []
-    for n in first_node_list:
-        for nn in second_node_list:
-            if(n.relation_name == nn. relation_name):
-                results.append(n)
-
-    return results
-
-
-
-def diff(first_node_list, second_node_list):
-    results = []
-    for n in first_node_list:
-        found = False
-        for nn in second_node_list:
-            if n.relation_name == nn.relation_name:
-                if n.node_type == nn.node_type:
-                    found = True
-                else:
-                    s = dict()
-                    s['L']
-                found = True
-        # end inner for
-        if not found:
-            results.append(n)
-    # end outer for
-
-
-
-
-def sets_info(left_node_list, right_node_list):
-    result = dict()
-    result["L"] = diff(left_node_list, right_node_list)
-    result["R"] = diff(right_node_list, left_node_list)
-    result["I"] = intersection(left_node_list, right_node_list)
-    print(result)
-
-
->>>>>>> 7bb35f826015f07eea4539869e2b3d639171be5a
 class NodesComparison:
     def __init__(self, head_node_1, head_node_2):
         self.head_node_1 = head_node_1
@@ -424,8 +382,5 @@ class NodesComparison:
             else:
                 table_pairs.append([[node1], []])
 
-<<<<<<< HEAD
         return table_pairs
-=======
 
->>>>>>> 7bb35f826015f07eea4539869e2b3d639171be5a
