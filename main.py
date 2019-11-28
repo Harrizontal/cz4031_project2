@@ -1,9 +1,7 @@
 import sys
 import json
 from PyQt5.Qt import QApplication, QClipboard
-from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QWidget, QPlainTextEdit, QVBoxLayout, QHBoxLayout, QPushButton, QGridLayout, QLabel,QLineEdit,QGroupBox, QGroupBox, QTabWidget,QMessageBox
-from PyQt5.QtCore import pyqtSlot, QSize
 from Connection import Connection
 import vocalizer2
 from Session import Session
